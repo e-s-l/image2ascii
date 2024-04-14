@@ -24,18 +24,20 @@ import numpy as np          #for the usual
 
 
 ########
-
-debug = True
+debug = False    #print misc. outputs
+#
+scale = 4     #shrink image size
+#
+ASCIICHARS = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"  #liight to dark, left to right
 
 ############################################################
 
-def img2AsciiConvertor(imgFile, scale):
-
-
+def preProcessImage(imgFile):
     ###
-    #exception handling for bad files
-    #ideally will be able to take any image file type.
+    # some minor preprocessing
+    ###
 
+    #
     fileName, fileExtension = os.path.splitext(imgFile)
 
     if (debug):
@@ -52,15 +54,21 @@ def img2AsciiConvertor(imgFile, scale):
     
     #open the resized image
     img = Image.open(fileName+".resized%s" % fileExtension)
-    W,H = img.size
 
     #convert image to RBG type
     img = img.convert ('RGB')
 
+    return img
+
+############################################################
+
+def img2AsciiConvertor(img, scale):
+
+    #get img dimensions
+    W,H = img.size
 
     ############################################################
     #convert image into brightness matrix (averaged rgb values for each pixel)
-
 
     #initialise (dark) matrix
     BM = np.zeros((W,H))
@@ -81,41 +89,44 @@ def img2AsciiConvertor(imgFile, scale):
 
     ############################################################
     #convert brightness into ascii
-    # from light to dark: `^\”,:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$   #67 != 26 lower case + 10 numerals + 33 special characters?
 
     #woudlnt really want 1 asciichar per pixel, but anyway...
-
-
-    ##################
-
-    ASCIICHARS = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
 
     #####
     f = open("imageAsAscii.txt", "wt")
     #
+    output = ""
     for Y in range(0,H):
         for X in range(0,W):
             brightness = BM[X,Y]
             asciiIndex = (int) ((len(ASCIICHARS) - 1) * (brightness / 255.0))
             asciiValue = ASCIICHARS[asciiIndex]
-            f.write(asciiValue+" ")
-
-        f.write('\n')
+            output+=asciiValue+" "
+        output+="\n"
+    f.write(output)
     #
     f.close()
 
 
 ############################################################
-#call initialisation function with input arg of image name
-if __name__ == "__main__":
+def main():
+
+    ###
+    if len(sys.argv) != 2:
+        print("Try: python image2ascii.py <image_file>")
+        sys.exit(1)
 
     #if cli usage is: ./image2ascii.py imagefile.png
-    scriptName = sys.argv[0]
-    imgFile = sys.argv[1]
-    #
-    scaling = 8
-
-    #main function (take an OO approach later)
-    img2AsciiConvertor(imgFile, scaling)
-
+    image_file = preProcessImage(sys.argv[1])
     
+    #
+    img2AsciiConvertor(image_file, scale)
+
+
+############################################################
+#call initialisation function with input arg of image name
+if __name__ == "__main__":
+    main()
+    print(":)")
+
+###
