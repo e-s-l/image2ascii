@@ -12,8 +12,7 @@
 ##################
 ### TO DO:
 #   exception handling
-#   print to console
-# 
+#   
 ##################
 
 #imports:
@@ -24,9 +23,14 @@ import numpy as np          #for the usual
 
 
 ########
-debug = False    #print misc. outputs
+debug = False   #print misc. outputs
+global printToConsole
+global printToFile
+
+printToFile = False
+printToConsole = False
 #
-scale = 4     #shrink image size
+scale = int(5)     #scale factor to shrink image size
 #
 ASCIICHARS = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"  #liight to dark, left to right
 
@@ -46,23 +50,38 @@ def preProcessImage(imgFile):
     ############################################################
     #pre-process the image file
     #open image file
-    img = Image.open(imgFile)
+    try:
+        img = Image.open(imgFile)       
+    except IOError as e:
+        print("Error opening the image file:", e)
+        print("Are u sure this is an image file? Better start again...")
+        sys.exit(1)
+    ###
 
-    #resize image (and save and open new)
+
     W,H = img.size
-    img.resize((W//scale, H//scale)).save(fileName+".resized%s" % fileExtension)
+
+    if (printToConsole):
+        #get console size
+        console_width = os.get_terminal_size().columns
+        aspect_ratio = W / H
+        new_height = int(console_width / aspect_ratio)
+        #resize
+        img = img.resize((console_width, new_height)) 
     
-    #open the resized image
-    img = Image.open(fileName+".resized%s" % fileExtension)
+    ###
+
+    if (printToFile):
+        img = img.resize((W//scale, H//scale))
 
     #convert image to RBG type
-    img = img.convert ('RGB')
+    img = img.convert('RGB')
 
     return img
 
 ############################################################
 
-def img2AsciiConvertor(img, scale):
+def img2AsciiConvertor(img):
 
     #get img dimensions
     W,H = img.size
@@ -71,7 +90,7 @@ def img2AsciiConvertor(img, scale):
     #convert image into brightness matrix (averaged rgb values for each pixel)
 
     #initialise (dark) matrix
-    BM = np.zeros((W,H))
+    BM = np.zeros((W, H))
 
     for X in range(0,W):
         for Y in range(0,H):
@@ -81,7 +100,7 @@ def img2AsciiConvertor(img, scale):
             #Calculate Brightness
             brightness = sum([R,G,B])/3
             #note: could (should?!) use luminance formula
-            BM[X,Y]= brightness
+            BM[X, Y]= brightness
     
     #
     if debug:
@@ -92,41 +111,82 @@ def img2AsciiConvertor(img, scale):
 
     #woudlnt really want 1 asciichar per pixel, but anyway...
 
-    #####
-    f = open("imageAsAscii.txt", "wt")
-    #
+     #
     output = ""
     for Y in range(0,H):
         for X in range(0,W):
             brightness = BM[X,Y]
             asciiIndex = (int) ((len(ASCIICHARS) - 1) * (brightness / 255.0))
             asciiValue = ASCIICHARS[asciiIndex]
-            output+=asciiValue+" "
+            output+=asciiValue
         output+="\n"
-    f.write(output)
-    #
-    f.close()
 
+    if (debug):
+        print(printToFile)
+        print(printToConsole)
 
+    if (printToFile):
+        #####
+        f = open("imageAsAscii.txt", "wt")
+        f.write(output)
+        f.close()
+        if (debug):
+            print('printed to file')
+    
+    if (printToConsole):
+        ###
+       # print('hello')
+        print(output)
+  
+     
 ############################################################
 def main():
+
+    global printToConsole
+    global printToFile
 
     ###
     if len(sys.argv) != 2:
         print("Try: python image2ascii.py <image_file>")
         sys.exit(1)
 
+    #print to file or console:
+    print("Would u like to print to file [1] or the konsole [2]?")
+    while(True):
+        user_in = input().strip().lower()
+        if user_in == "1" or user_in == "file":
+            printToFile = True
+            if (debug):
+                print("printing to file...")
+            break
+            ###
+        elif user_in == "2" or user_in == "console":
+            printToConsole = True
+            if (debug):
+                print("printing to console...")
+            break
+            ###
+        else:
+            print("Please enter 1 or 2, or file or console...")
+
     #if cli usage is: ./image2ascii.py imagefile.png
     image_file = preProcessImage(sys.argv[1])
-    
-    #
-    img2AsciiConvertor(image_file, scale)
+
+    #call the runner
+    img2AsciiConvertor(image_file)
 
 
 ############################################################
 #call initialisation function with input arg of image name
 if __name__ == "__main__":
-    main()
+    try: 
+        main()
+    except KeyboardInterrupt:
+        print("\nexiting...")
+        sys.exit(0)
+    except Exception as e:
+        print("There is an error:", e)
+        sys.exit(1)
     print(":)")
 
 ###
