@@ -24,31 +24,29 @@ import numpy as np          #for the usual
 
 ########
 debug = False   #print misc. outputs
+###
+#control parameters:
 global printToConsole
 global printToFile
-
 printToFile = False
 printToConsole = False
 #
 scale = int(5)     #scale factor to shrink image size
 #
-ASCIICHARS = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"  #liight to dark, left to right
+ASCIICHARS = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"  #light to dark, left to right
 
 ############################################################
 
 def preProcessImage(imgFile):
-    ###
+    #######################
     # some minor preprocessing
     ###
-
-    #
     fileName, fileExtension = os.path.splitext(imgFile)
 
     if (debug):
         print(fileName+'\n', fileExtension)
-
-    ############################################################
-    #pre-process the image file
+    
+    #######################
     #open image file
     try:
         img = Image.open(imgFile)       
@@ -56,11 +54,10 @@ def preProcessImage(imgFile):
         print("Error opening the image file:", e)
         print("Are u sure this is an image file? Better start again...")
         sys.exit(1)
-    ###
-
-
+    
+    #######################
+    #Resize the image according to the output:
     W,H = img.size
-
     if (printToConsole):
         #get console size
         console_width = os.get_terminal_size().columns
@@ -68,12 +65,11 @@ def preProcessImage(imgFile):
         new_height = int(console_width / aspect_ratio)
         #resize
         img = img.resize((console_width, new_height)) 
-    
     ###
-
     if (printToFile):
         img = img.resize((W//scale, H//scale))
 
+    #######################
     #convert image to RBG type
     img = img.convert('RGB')
 
@@ -83,10 +79,10 @@ def preProcessImage(imgFile):
 
 def img2AsciiConvertor(img):
 
-    #get img dimensions
+    #get img (new) dimensions (again)
     W,H = img.size
 
-    ############################################################
+    #######################
     #convert image into brightness matrix (averaged rgb values for each pixel)
 
     #initialise (dark) matrix
@@ -100,18 +96,15 @@ def img2AsciiConvertor(img):
             #Calculate Brightness
             brightness = sum([R,G,B])/3
             #note: could (should?!) use luminance formula
-            BM[X, Y]= brightness
-    
+            BM[X, Y]= brightness 
     #
     if debug:
         print(BM)
 
-    ############################################################
+    #######################
     #convert brightness into ascii
-
     #woudlnt really want 1 asciichar per pixel, but anyway...
-
-     #
+    #######################
     output = ""
     for Y in range(0,H):
         for X in range(0,W):
@@ -120,11 +113,12 @@ def img2AsciiConvertor(img):
             asciiValue = ASCIICHARS[asciiIndex]
             output+=asciiValue
         output+="\n"
-
+    #
     if (debug):
         print(printToFile)
         print(printToConsole)
 
+    #######################
     if (printToFile):
         #####
         f = open("imageAsAscii.txt", "wt")
@@ -135,7 +129,6 @@ def img2AsciiConvertor(img):
     
     if (printToConsole):
         ###
-       # print('hello')
         print(output)
   
      
@@ -171,10 +164,10 @@ def main():
 
     #if cli usage is: ./image2ascii.py imagefile.png
     image_file = preProcessImage(sys.argv[1])
-
+    
+    #######################
     #call the runner
     img2AsciiConvertor(image_file)
-
 
 ############################################################
 #call initialisation function with input arg of image name
