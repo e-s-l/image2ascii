@@ -2,10 +2,19 @@
 
 #image2ascii.
 
+##################
 #based off: 
 #https://medium.com/@shubham0473/unleash-your-inner-artist-a-step-by-step-guide-to-converting-images-to-ascii-art-using-java-97860464f19a
 #and
 #https://github.com/isaksolheim/image-to-ascii/blob/master/image_to_ascii.py
+##################
+
+##################
+### TO DO:
+#   exception handling
+#   print to console
+# 
+##################
 
 #imports:
 import sys      #system stuff (to get input arguments)
@@ -77,17 +86,13 @@ def img2AsciiConvertor(imgFile, scale):
     #woudlnt really want 1 asciichar per pixel, but anyway...
 
 
-
-
     ##################
 
     ASCIICHARS = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
 
     #####
-
     f = open("imageAsAscii.txt", "wt")
-
-
+    #
     for Y in range(0,H):
         for X in range(0,W):
             brightness = BM[X,Y]
@@ -96,7 +101,6 @@ def img2AsciiConvertor(imgFile, scale):
             f.write(asciiValue+" ")
 
         f.write('\n')
-
     #
     f.close()
 
@@ -109,7 +113,7 @@ if __name__ == "__main__":
     scriptName = sys.argv[0]
     imgFile = sys.argv[1]
     #
-    scaling = 3
+    scaling = 8
 
     #main function (take an OO approach later)
     img2AsciiConvertor(imgFile, scaling)
