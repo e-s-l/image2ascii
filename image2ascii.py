@@ -18,7 +18,15 @@
 #imports:
 import sys      #system stuff (to get input arguments)
 import os       #operating system stuff (to get file extensions)
-from PIL import Image      #'python image library' (for the processing)
+
+try:
+    from pillow import Image      #'python image library' (for the processing)
+except ModuleNotFoundError as mne:
+    try:
+        from PIL import Image
+    except  ModuleNotFoundError as mne:
+        print("required packages unavailable:", mne)
+            
 import numpy as np          #for the usual
 
 
@@ -164,7 +172,7 @@ def main():
 
     #if cli usage is: ./image2ascii.py imagefile.png
     image_file = preProcessImage(sys.argv[1])
-    
+
     #######################
     #call the runner
     img2AsciiConvertor(image_file)
