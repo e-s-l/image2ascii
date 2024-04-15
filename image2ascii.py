@@ -26,6 +26,7 @@ except ModuleNotFoundError as mne:
         from PIL import Image
     except  ModuleNotFoundError as mne:
         print("required packages unavailable:", mne)
+        sys.exit(1)
             
 import numpy as np          #for the usual
 
