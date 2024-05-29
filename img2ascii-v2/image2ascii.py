@@ -24,15 +24,16 @@ import os                   # operating system stuff (to get file extensions)
 from PIL import Image       # Python Image Library
 import numpy as np          # for the usual
 
-#######################
+###################
 # control parameters:
 debug = True   # print misc. outputs
 printToConsole = False
 printToFile = False
-scale = int(20)     # scale factor to shrink image size
+bfs_grouping = False
+print_shapes = True
+scale = int(50)     # scale factor to shrink image size
+tolerance = 100
 ASCIICHARS = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"  # light to dark, left to right
-
-############################################################
 
 ##################
 
@@ -58,6 +59,9 @@ def preprocess_image(img_file):
     ##################
     # Resize the image according to the output:
     W, H = img.size
+    if debug:
+        print('W, H =', (W, H))
+
     if printToConsole:
         # get console size
         console_width = os.get_terminal_size().columns
@@ -83,7 +87,7 @@ def get_brightness(r, g, b):
     return brightness
 
 
-def bfs_search(matrix, start, tolerance):
+def bfs_search(matrix, start, tol):
 
     w, h = matrix.shape
     queue = [start]
@@ -98,14 +102,13 @@ def bfs_search(matrix, start, tolerance):
 
         for i in range(max(0, x-1), min(w, x+2)):
             for j in range(max(0, y-1), min(h, y+2)):
-                if (i, j) not in visited:
-                    if abs(matrix[i, j] - b_init) <= tolerance:
-                        queue.append((i, j))
+                if (i, j) not in visited and abs(matrix[i, j] - b_init) <= tol:
+                    queue.append((i, j))
 
     return group, visited
 
 
-def find_shapes(matrix, tolerance):
+def find_shapes(matrix, tol):
     # BFS pathfinder to get subsets of similar brightness
 
     w, h = matrix.shape
@@ -115,11 +118,38 @@ def find_shapes(matrix, tolerance):
     for x in range(w):
         for y in range(h):
             if (x, y) not in visited:
-                shape, newly_visited = bfs_search(matrix, (x, y), tolerance)
+                shape, newly_visited = bfs_search(matrix, (x, y), tol)
                 shapes.append(shape)
                 visited.extend(newly_visited)
 
     return shapes
+
+
+def save_output(matrix, file):
+    # print or save
+    W, H = matrix.shape
+    output = ""
+    for Y in range(H):
+        for X in range(W):
+            output += matrix[X, Y]
+        output += "\n"
+    #
+    if debug:
+        print(printToFile)
+        print(printToConsole)
+
+    #######################
+    if printToFile:  # make this a function so can call on shapes
+        #####
+        f = open(file, "wt")
+        f.write(output)
+        f.close()
+        if debug:
+            print('printed to file')
+
+    if printToConsole:
+        ###
+        print(output)
 
 
 def img2ascii_convertor(img):
@@ -136,12 +166,9 @@ def img2ascii_convertor(img):
     for X in range(0, W):
         for Y in range(0, H):
             pos = (X, Y)                    # get position
-            pixelRGB = img.getpixel(pos)    # get RGB
-            R, G, B = pixelRGB
-            # Calculate Brightness
-            brightness = sum([R, G, B])/3
-            # note: could (should?!) use luminance formula
-            BM[X, Y] = brightness
+            pixelrgb = img.getpixel(pos)    # get RGB
+            r, g, b = pixelrgb
+            BM[X, Y] = get_brightness(r, g, b)
 
     #
     if debug:
@@ -149,54 +176,41 @@ def img2ascii_convertor(img):
 
     ######################
 
-    shapes = find_shapes(BM, tolerance=10)
-    print(len(shapes))
-
-    sys.exit(1)
-
-
-    #initialise
-    ascii_matrix = np.full((w, h), ' ', dtype=str)
+    # initialise (empty) matrix
+    ascii_matrix = np.full((W, H), ' ', dtype=str)
 
     # convert brightness into ascii
-    for shape in shapes:
-        b_av = np.mean([bm[x, y] for x, y in group])
-        ascii_index = int((len(ASCIICHARS) - 1)*(b_av/255.0))
-        ascii_value = ASCIICHARS[ascii_index]
-        for x, y in group:
-            ascii_matrix[x, y] = ascii_value
-
-    #######################
-    # print or save             #add option to print-save shape at a time
-    output = ""
-    for Y in range(H):
-        for X in range(W):
-            output += ascii_matrix[X, Y]
-        output += "\n"
-    #
-    if debug:
-        print(printToFile)
-        print(printToConsole)
-
-    #######################
-    if printToFile:
-        #####
-        f = open("imageAsAscii.txt", "wt")
-        f.write(output)
-        f.close()
+    if bfs_grouping:
+        shapes = find_shapes(BM, tolerance)
+        shape_num = 0
         if debug:
-            print('printed to file')
-    
-    if printToConsole:
-        ###
-        print(output)
-  
-     
+            print("num of shapes =", len(shapes))
+        for shape in shapes:
+            shape_num += 1
+            b_av = np.mean([BM[x, y] for x, y in shape])
+            ascii_index = int((len(ASCIICHARS) - 1)*(b_av/255.0))
+            ascii_value = ASCIICHARS[ascii_index]
+            for x, y in shape:
+                ascii_matrix[x, y] = ascii_value
+            if print_shapes:
+                save_output(ascii_matrix, "shape_%i.txt" % shape_num)
+    else:
+        for Y in range(H):
+            for X in range(W):
+                brightness = BM[X, Y]
+                asciiIndex = int((len(ASCIICHARS) - 1) * (brightness / 255.0))
+                ascii_matrix[X, Y] = ASCIICHARS[asciiIndex]
+
+    #######################
+    save_output(ascii_matrix, "imageAsAscii.txt")
+
+
 ############################################################
 def main():
 
     global printToConsole
     global printToFile
+    global bfs_grouping
 
     # print to file or console:
     print("Would u like to print to file [1] or the console [2]?")
@@ -208,7 +222,7 @@ def main():
                 print("printing to file...")
             break
             ###
-        elif user_in == "2" or user_in == "console":
+        elif user_in == "2" or user_in == "console" or user_in == "":
             printToConsole = True
             if debug:
                 print("printing to console...")
@@ -216,11 +230,28 @@ def main():
             ###
         else:
             print("Please enter 1 or 2, or 'file' or 'console'...")
-
-    # if cli usage is: ./image2ascii.py imagefile.png
-    image_file = preprocess_image(sys.argv[1])
+        # print to file or console:
+    print("Would u like to use BFS shape grouping [1] or not [2]?")
+    while True:
+        user_in = input().strip().lower()
+        if user_in == "1" or user_in == "bfs":
+            bfs_grouping = True
+            if debug:
+                print("Using bfs grouping")
+            break
+            ###
+        elif user_in == "2" or user_in == "no" or user_in == "":
+            bfs_grouping = False
+            if debug:
+                print("Not using BFS grouping.")
+            break
+            ###
+        else:
+            print("Please enter 1 or 2, or 'bfs' or 'no'...")
 
     #######################
+    # if cli usage is: ./image2ascii.py imagefile.png
+    image_file = preprocess_image(sys.argv[1])
     # call the runner
     img2ascii_convertor(image_file)
 
