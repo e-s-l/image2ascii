@@ -40,7 +40,7 @@ global printToFile
 printToFile = False
 printToConsole = False
 #
-scale = int(5)     #scale factor to shrink image size
+scale = int(20)     #scale factor to shrink image size
 #
 ASCIICHARS = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"  #light to dark, left to right
 
