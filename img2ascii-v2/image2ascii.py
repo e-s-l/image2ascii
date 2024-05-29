@@ -31,8 +31,8 @@ printToConsole = False
 printToFile = False
 bfs_grouping = False
 print_shapes = True
-scale = int(50)     # scale factor to shrink image size
-tolerance = 100
+scale = int(100)     # scale factor to shrink image size
+tolerance = 200
 ASCIICHARS = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"  # light to dark, left to right
 
 ##################
@@ -92,13 +92,13 @@ def bfs_search(matrix, start, tol):
     w, h = matrix.shape
     queue = [start]
     b_init = matrix[start]
-    group = []
-    visited = []
+    group = set()
+    visited = set()
 
     while queue:
         x, y = queue.pop(0)
-        visited.append((x, y))
-        group.append((x, y))
+        visited.add((x, y))
+        group.add((x, y))
 
         for i in range(max(0, x-1), min(w, x+2)):
             for j in range(max(0, y-1), min(h, y+2)):
@@ -113,14 +113,14 @@ def find_shapes(matrix, tol):
 
     w, h = matrix.shape
     shapes = []
-    visited = []
+    visited = set()
 
     for x in range(w):
         for y in range(h):
             if (x, y) not in visited:
                 shape, newly_visited = bfs_search(matrix, (x, y), tol)
                 shapes.append(shape)
-                visited.extend(newly_visited)
+                visited.update(newly_visited)
 
     return shapes
 
@@ -213,37 +213,31 @@ def main():
     global bfs_grouping
 
     # print to file or console:
+    opts_in_file = {"1", "file"}
+    opts_in_console = {"2", "console", ""}
     print("Would u like to print to file [1] or the console [2]?")
     while True:
         user_in = input().strip().lower()
-        if user_in == "1" or user_in == "file":
-            printToFile = True
+        if user_in in opts_in_file or user_in in opts_in_console:
+            printToFile = user_in in opts_in_file
+            printToConsole = user_in in opts_in_console
             if debug:
-                print("printing to file...")
-            break
-            ###
-        elif user_in == "2" or user_in == "console" or user_in == "":
-            printToConsole = True
-            if debug:
-                print("printing to console...")
+                print("printing to", "file..." if printToFile else "console...")
             break
             ###
         else:
             print("Please enter 1 or 2, or 'file' or 'console'...")
-        # print to file or console:
+
+    # use BFS to find shapes or not:
+    opts_in_bfs = {"1", "bfs"}
+    opts_in_no_bfs = {"2", "no", ""}
     print("Would u like to use BFS shape grouping [1] or not [2]?")
     while True:
         user_in = input().strip().lower()
-        if user_in == "1" or user_in == "bfs":
-            bfs_grouping = True
+        if user_in in opts_in_bfs or user_in in opts_in_no_bfs:
+            bfs_grouping = user_in in opts_in_bfs
             if debug:
-                print("Using bfs grouping")
-            break
-            ###
-        elif user_in == "2" or user_in == "no" or user_in == "":
-            bfs_grouping = False
-            if debug:
-                print("Not using BFS grouping.")
+                print("bfs grouping", "applied" if bfs_grouping else "not applied")
             break
             ###
         else:
