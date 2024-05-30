@@ -225,7 +225,7 @@ def img2ascii_convertor(img):
                 char_matrix[x, y] = shape_matrix[x, y]
 
             if printToFile and save_shapes:
-                save_output_to_file(shape_matrix, "./shapes/shape_%i.txt" % shape_num)
+                save_output_to_file(shape_matrix, "shape_%i.txt" % shape_num)
             elif printToConsole and print_shapes:
                 print_output_to_console(shape_matrix)
 
