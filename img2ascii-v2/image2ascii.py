@@ -13,7 +13,8 @@
 
 ##################
 # TO DO:
-#   .
+#   fix saving shapes to file
+#
 ##################
 
 # imports:
@@ -32,7 +33,7 @@ bfs_grouping = False
 ##################
 
 scale = int(20)
-tolerance = 10
+tolerance = 50
 
 ##################
 # The character array to map brightness to:
@@ -50,6 +51,7 @@ save_shapes = False
 use_luminance_form = True
 
 
+############################################################
 def preprocess_image(img_file):
     # some minor preprocessing
 
@@ -92,6 +94,7 @@ def preprocess_image(img_file):
     return img
 
 
+############################################################
 def get_brightness(r, g, b):
     # Given a set of rgb values of a pixel, calculate brightness
     # brightness = sum([r, g, b])/3             # simple average
@@ -99,7 +102,9 @@ def get_brightness(r, g, b):
     return brightness
 
 
+############################################################
 def bfs_search(matrix, start, tol):
+    # breadth first seach algorithm
 
     w, h = matrix.shape
     queue = [start]
@@ -124,6 +129,7 @@ def bfs_search(matrix, start, tol):
     return group, visited
 
 
+############################################################
 def find_shapes(matrix, tol):
     # BFS pathfinder to get subsets of similar brightness
 
@@ -141,7 +147,9 @@ def find_shapes(matrix, tol):
     return shapes
 
 
+############################################################
 def get_output(matrix):
+    # for printing the character matrix as plain text
 
     W, H = matrix.shape
     output = ""
@@ -153,11 +161,14 @@ def get_output(matrix):
     return output
 
 
+############################################################
 def print_output_to_console(matrix):
 
     output = get_output(matrix)
     print(output)
 
+
+############################################################
 def save_output_to_file(matrix, file):
 
     output = get_output(matrix)
@@ -166,21 +177,7 @@ def save_output_to_file(matrix, file):
     f.close()
 
 
-#def print_output(matrix, file):
-    # print or save
-
-    #
-#    if printToFile:  # make this a function so can call on shapes
-        #####
-#        f = open(file, "wt")
-#        f.write(output)
-#        f.close()
-
-#    if printToConsole:
-        ###
-#        print(output)
-
-
+############################################################
 def img2ascii_convertor(img):
 
     #######################
@@ -208,7 +205,9 @@ def img2ascii_convertor(img):
     char_matrix = np.full((W, H), ' ', dtype=str)
 
     if bfs_grouping:
-        print("finding shapes")
+        if debug:
+            print("finding shapes")
+
         shapes = find_shapes(BM, tolerance)
         shape_num = 0
         if debug:
@@ -226,7 +225,7 @@ def img2ascii_convertor(img):
                 char_matrix[x, y] = shape_matrix[x, y]
 
             if printToFile and save_shapes:
-                save_output_to_file(shape_matrix, "shapes/shape_%i.txt" % shape_num)
+                save_output_to_file(shape_matrix, "./shapes/shape_%i.txt" % shape_num)
             elif printToConsole and print_shapes:
                 print_output_to_console(shape_matrix)
 
