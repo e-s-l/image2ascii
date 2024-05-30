@@ -30,13 +30,25 @@ debug = True   # print misc. outputs
 printToConsole = False
 printToFile = False
 bfs_grouping = False
-print_shapes = True
-scale = int(20)     # scale factor to shrink image size #slows down around 50    # but depends on img file
-tolerance = 5          # slows down above 20
-# The character array to map brightness to:
-ASCIICHARS = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"  # light to dark, left to right
 
 ##################
+
+scale = int(20)
+tolerance = 50
+
+##################
+# The character array to map brightness to:
+ASCII_CHARS = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"  # light to dark, left to right
+WOW_SNR = "123456789ABCDEFGHIJKLMNOPQRSTU"
+char_map = WOW_SNR
+##################
+
+print_shapes = True
+save_shapes = False
+
+##################
+
+use_luminance_form = True
 
 
 def preprocess_image(img_file):
@@ -110,7 +122,6 @@ def bfs_search(matrix, start, tol):
                     if not visited[i, j] and abs(matrix[i, j] - b_init) <= tol:
                         queue.append((i, j))
 
-
     return group, visited
 
 
@@ -123,11 +134,11 @@ def find_shapes(matrix, tol):
 
     for x in range(w):
         for y in range(h):
-            if (x, y) not in visited:
+            if not visited[x, y]:
                 shape, newly_visited = bfs_search(matrix, (x, y), tol)
                 print("found shape!")
                 shapes.append(shape)
-                visited = visited + newly_visited   #HMMMM
+                visited = visited | newly_visited
 
     return shapes
 
@@ -192,8 +203,8 @@ def img2ascii_convertor(img):
             #
             shape_num += 1
             b_av = np.mean([BM[x, y] for x, y in shape])
-            ascii_index = int((len(ASCIICHARS) - 1)*(b_av/255.0))
-            ascii_value = ASCIICHARS[ascii_index]
+            ascii_index = int((len(char_map) - 1)*(b_av/255.0))
+            ascii_value = char_map[ascii_index]
             for x, y in shape:
                 ascii_matrix[x, y] = ascii_value
             if print_shapes:
@@ -233,8 +244,8 @@ def main():
             print("Please enter 1 or 2, or 'file' or 'console'...")
 
     # use BFS to find shapes or not:
-    opts_in_bfs = {"1", "bfs"}
-    opts_in_no_bfs = {"2", "no", ""}
+    opts_in_bfs = {"1", "bfs", ""}
+    opts_in_no_bfs = {"2", "no"}
     print("Would u like to use BFS shape grouping [1] or not [2]?")
     while True:
         user_in = input().strip().lower()
