@@ -17,14 +17,14 @@
 ##################
 
 # imports:
-import sys                  # system stuff (to get input arguments)
-import os                   # operating system stuff (to get file extensions)
-from PIL import Image       # Python Image Library
-import numpy as np          # for the usual
+import sys  # system stuff (to get input arguments)
+import os  # operating system stuff (to get file extensions)
+from PIL import Image  # Python Image Library
+import numpy as np  # for the usual
 
 ###################
 # control parameters:
-debug = False   # print misc. outputs
+debug = False  # print misc. outputs
 printToConsole = False
 printToFile = False
 bfs_grouping = False
@@ -58,7 +58,7 @@ def preprocess_image(img_file):
     fileName, fileExtension = os.path.splitext(img_file)
 
     if debug:
-        print(fileName+'\n', fileExtension)
+        print(fileName + '\n', fileExtension)
     ##################
 
     # open image file
@@ -68,7 +68,7 @@ def preprocess_image(img_file):
         print("Error opening the image file: \n", ioe)
         print("Are u sure this is an image file? Better start again...")
         sys.exit(1)
-    
+
     ##################
     # Resize the image according to the output:
     W, H = img.size
@@ -78,13 +78,13 @@ def preprocess_image(img_file):
     if printToConsole:
         # get console size
         console_width = os.get_terminal_size().columns
-        aspect_ratio = W/H
-        new_height = int(console_width/aspect_ratio)
+        aspect_ratio = W / H
+        new_height = int(console_width / aspect_ratio)
         # resize
-        img = img.resize((console_width, new_height)) 
-    ###
+        img = img.resize((console_width, new_height))
+        ###
     if printToFile:
-        img = img.resize((W//scale, H//scale))
+        img = img.resize((W // scale, H // scale))
 
     #######################
     # convert image to RBG type
@@ -97,7 +97,7 @@ def preprocess_image(img_file):
 def get_brightness(r, g, b):
     # Given a set of rgb values of a pixel, calculate brightness
     # brightness = sum([r, g, b])/3             # simple average
-    brightness = 0.299*r + 0.587*g + 0.114*b    # luminance formula
+    brightness = 0.299 * r + 0.587 * g + 0.114 * b  # luminance formula
     return brightness
 
 
@@ -120,8 +120,8 @@ def bfs_search(matrix, start, tol):
             visited[x, y] = True
             group.append((x, y))
 
-            for i in range(max(0, x-1), min(w, x+2)):
-                for j in range(max(0, y-1), min(h, y+2)):
+            for i in range(max(0, x - 1), min(w, x + 2)):
+                for j in range(max(0, y - 1), min(h, y + 2)):
                     if not visited[i, j] and abs(matrix[i, j] - b_init) <= tol:
                         queue.append((i, j))
 
@@ -162,14 +162,12 @@ def get_output(matrix):
 
 ############################################################
 def print_output_to_console(matrix):
-
     output = get_output(matrix)
     print(output)
 
 
 ############################################################
 def save_output_to_file(matrix, file):
-
     output = get_output(matrix)
     f = open(file, "wt")
     f.write(output)
@@ -178,7 +176,6 @@ def save_output_to_file(matrix, file):
 
 ############################################################
 def img2ascii_convertor(img, file):
-
     #######################
 
     # convert image into brightness matrix (averaged rgb values for each pixel)
@@ -189,8 +186,8 @@ def img2ascii_convertor(img, file):
 
     for X in range(W):
         for Y in range(H):
-            pos = (X, Y)                    # get position
-            pixel_rgb = img.getpixel(pos)    # get RGB
+            pos = (X, Y)  # get position
+            pixel_rgb = img.getpixel(pos)  # get RGB
             r, g, b = pixel_rgb
             BM[X, Y] = get_brightness(r, g, b)
     #
@@ -228,7 +225,7 @@ def img2ascii_convertor(img, file):
             elif printToConsole and print_shapes:
                 print_output_to_console(shape_matrix)
 
-    else:   # no BFS shape finder...
+    else:  # no BFS shape finder...
         for Y in range(H):
             for X in range(W):
                 char_matrix[X, Y] = get_char_from_b(BM[X, Y])
@@ -249,7 +246,6 @@ def get_char_from_b(brightness):
 
 ############################################################
 def process_user_input():
-
     #
     global printToConsole
     global printToFile
@@ -314,13 +310,13 @@ def process_user_input():
 
 ############################################################
 def main():
-
     process_user_input()
     #######################
     # if cli usage is: ./image2ascii.py imagefile.png
     image_file, fileName = preprocess_image(sys.argv[1])
     # call the runner
     img2ascii_convertor(image_file, fileName)
+
 
 ############################################################
 
@@ -332,7 +328,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nExiting...")
         sys.exit(0)
-        
+
     except Exception as e:
         print("There is an error: \n", e)
         sys.exit(1)
