@@ -23,6 +23,7 @@ import sys                  # system stuff (to get input arguments)
 import os                   # operating system stuff (to get file extensions)
 from PIL import Image       # Python Image Library
 import numpy as np          # for the usual
+from collections import deque
 
 ###################
 # control parameters:
@@ -56,7 +57,7 @@ def preprocess_image(img_file):
         print("Error opening the image file: \n", ioe)
         print("Are u sure this is an image file? Better start again...")
         sys.exit(1)
-    
+
     ##################
     # Resize the image according to the output:
     W, H = img.size
@@ -69,7 +70,7 @@ def preprocess_image(img_file):
         aspect_ratio = W/H
         new_height = int(console_width/aspect_ratio)
         # resize
-        img = img.resize((console_width, new_height)) 
+        img = img.resize((console_width, new_height))
     ###
     if printToFile:
         img = img.resize((W//scale, H//scale))
@@ -91,14 +92,14 @@ def get_brightness(r, g, b):
 def bfs_search(matrix, start, tol):
 
     w, h = matrix.shape
-    queue = [start]
-
+    #queue = [start]
+    queue = deque([start])
     b_init = matrix[start]
     group = []
     visited = np.zeros((w, h), dtype=bool)
 
     while queue:
-        x, y = queue.pop(0)
+        x, y = queue.popleft() #queue.pop(0)
 
         if not visited[x, y]:
 
