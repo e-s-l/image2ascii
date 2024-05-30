@@ -13,9 +13,7 @@
 
 ##################
 # TO DO:
-#   exception handling
-#   add a search algorithm to group areas
-#   use luminance formula
+#   .
 ##################
 
 # imports:
@@ -34,7 +32,7 @@ bfs_grouping = False
 ##################
 
 scale = int(20)
-tolerance = 50
+tolerance = 5
 
 ##################
 # The character array to map brightness to:
@@ -136,14 +134,13 @@ def find_shapes(matrix, tol):
         for y in range(h):
             if not visited[x, y]:
                 shape, newly_visited = bfs_search(matrix, (x, y), tol)
-                print("found shape!")
                 shapes.append(shape)
                 visited = visited | newly_visited
 
     return shapes
 
 
-def save_output(matrix, file):
+def print_output(matrix, file):
     # print or save
     W, H = matrix.shape
     output = ""
@@ -165,20 +162,19 @@ def save_output(matrix, file):
 
 def img2ascii_convertor(img):
 
+    #######################
+
+    # convert image into brightness matrix (averaged rgb values for each pixel)
     # get img (new) dimensions (again)
     W, H = img.size
-
-    #######################
-    # convert image into brightness matrix (averaged rgb values for each pixel)
-
     # initialise (dark) matrix
     BM = np.zeros((W, H))
 
-    for X in range(0, W):
-        for Y in range(0, H):
+    for X in range(W):
+        for Y in range(H):
             pos = (X, Y)                    # get position
-            pixelrgb = img.getpixel(pos)    # get RGB
-            r, g, b = pixelrgb
+            pixel_rgb = img.getpixel(pos)    # get RGB
+            r, g, b = pixel_rgb
             BM[X, Y] = get_brightness(r, g, b)
     #
     if debug:
@@ -188,9 +184,8 @@ def img2ascii_convertor(img):
     ######################
 
     # initialise (empty) matrix
-    ascii_matrix = np.full((W, H), ' ', dtype=str)
+    char_matrix = np.full((W, H), ' ', dtype=str)
 
-    # convert brightness into ascii
     if bfs_grouping:
         print("finding shapes")
         shapes = find_shapes(BM, tolerance)
@@ -199,35 +194,53 @@ def img2ascii_convertor(img):
             print("num of shapes =", len(shapes))
         for shape in shapes:
             # initialise (empty) matrix
-            ascii_matrix = np.full((W, H), ' ', dtype=str)
-            #
+            shape_matrix = np.full((W, H), ' ', dtype=str)
             shape_num += 1
-            b_av = np.mean([BM[x, y] for x, y in shape])
-            ascii_index = int((len(char_map) - 1)*(b_av/255.0))
-            ascii_value = char_map[ascii_index]
+            #
             for x, y in shape:
-                ascii_matrix[x, y] = ascii_value
+                # find character for average brightness of the group:
+                b_av = np.mean([BM[x, y] for x, y in shape])
+                shape_matrix[x, y] = get_char_from_b(b_av)
+                # add to the culminative total matrix:
+                char_matrix[x, y] = shape_matrix[x, y]
+
             if print_shapes:
-                save_output(ascii_matrix, "shape_%i.txt" % shape_num)
-    else:
+                print_output(shape_matrix, "shape_%i.txt" % shape_num)
+
+                # we want to check a folder (to save these files to) exists and create it if not
+                # we want to run off the option of printing the shapes but keep printing the final.
+
+    else:   # no BFS shape finder...
         for Y in range(H):
             for X in range(W):
-                brightness = BM[X, Y]
-                asciiIndex = int((len(ASCIICHARS) - 1) * (brightness / 255.0))
-                ascii_matrix[X, Y] = ASCIICHARS[asciiIndex]
+                char_matrix[X, Y] = get_char_from_b(BM[X, Y])
 
-    #######################
-    save_output(ascii_matrix, "imageAsAscii.txt")
+    ###
+    print_output(char_matrix, "imageAsAscii.txt")
+
+############################################################
+def get_char_from_b(brightness):
+    # convert brightness into ascii:
+    index = int((len(char_map) - 1) * (brightness / 255.0))
+    return char_map[index]
 
 
 ############################################################
-def main():
+def process_user_input():
 
+    #
     global printToConsole
     global printToFile
     global bfs_grouping
+    global char_map
 
-    # print to file or console:
+    # confirm require image file supplied
+    if len(sys.argv) != 2:
+        print("Try: python image2ascii.py <image_file>")
+        sys.exit(1)
+
+    # ask for options:
+    # print to file or console...
     opts_in_file = {"1", "file"}
     opts_in_console = {"2", "console", ""}
     print("Would u like to print to file [1] or the console [2]?")
@@ -258,6 +271,29 @@ def main():
         else:
             print("Please enter 1 or 2, or 'bfs' or 'no'...")
 
+    # which character map to use:
+    opts_in_ascii = {"1", "ascii", ""}
+    opts_in_snr = {"2", "snr"}
+    print("Would u like to map to ascii characters [1] or snr values [2]?")
+    while True:
+        user_in = input().strip().lower()
+        if user_in in opts_in_ascii or user_in in opts_in_snr:
+            if user_in in opts_in_ascii:
+                char_map = ASCII_CHARS
+            else:
+                char_map = WOW_SNR
+            if debug:
+                print("mapping to ", "ascii" if user_in in opts_in_ascii else "snr")
+            break
+            ###
+        else:
+            print("Please enter 1 or 2, or 'ascii' or 'snr'...")
+
+
+############################################################
+def main():
+
+    process_user_input()
     #######################
     # if cli usage is: ./image2ascii.py imagefile.png
     image_file = preprocess_image(sys.argv[1])
@@ -269,12 +305,6 @@ def main():
 
 # call initialisation function with input arg of image name
 if __name__ == "__main__":
-
-    ###
-    if len(sys.argv) != 2:
-        print("Try: python image2ascii.py <image_file>")
-        sys.exit(1)
-
     try:
         main()
     except KeyboardInterrupt:
