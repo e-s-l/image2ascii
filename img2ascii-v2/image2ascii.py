@@ -24,7 +24,7 @@ import numpy as np          # for the usual
 
 ###################
 # control parameters:
-debug = True   # print misc. outputs
+debug = False   # print misc. outputs
 printToConsole = False
 printToFile = False
 bfs_grouping = False
@@ -32,12 +32,13 @@ bfs_grouping = False
 ##################
 
 scale = int(20)
-tolerance = 5
+tolerance = 10
 
 ##################
 # The character array to map brightness to:
-ASCII_CHARS = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"  # light to dark, left to right
+ASCII_CHARS = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
 WOW_SNR = "123456789ABCDEFGHIJKLMNOPQRSTU"
+# light to dark, left to right
 char_map = WOW_SNR
 ##################
 
@@ -140,24 +141,44 @@ def find_shapes(matrix, tol):
     return shapes
 
 
-def print_output(matrix, file):
-    # print or save
+def get_output(matrix):
+
     W, H = matrix.shape
     output = ""
     for Y in range(H):
         for X in range(W):
             output += matrix[X, Y]
         output += "\n"
-    #
-    if printToFile:  # make this a function so can call on shapes
-        #####
-        f = open(file, "wt")
-        f.write(output)
-        f.close()
 
-    if printToConsole:
+    return output
+
+
+def print_output_to_console(matrix):
+
+    output = get_output(matrix)
+    print(output)
+
+def save_output_to_file(matrix, file):
+
+    output = get_output(matrix)
+    f = open(file, "wt")
+    f.write(output)
+    f.close()
+
+
+#def print_output(matrix, file):
+    # print or save
+
+    #
+#    if printToFile:  # make this a function so can call on shapes
+        #####
+#        f = open(file, "wt")
+#        f.write(output)
+#        f.close()
+
+#    if printToConsole:
         ###
-        print(output)
+#        print(output)
 
 
 def img2ascii_convertor(img):
@@ -204,11 +225,11 @@ def img2ascii_convertor(img):
                 # add to the culminative total matrix:
                 char_matrix[x, y] = shape_matrix[x, y]
 
-            if print_shapes:
-                print_output(shape_matrix, "shape_%i.txt" % shape_num)
+            if printToFile and save_shapes:
+                save_output_to_file(shape_matrix, "shapes/shape_%i.txt" % shape_num)
+            elif printToConsole and print_shapes:
+                print_output_to_console(shape_matrix)
 
-                # we want to check a folder (to save these files to) exists and create it if not
-                # we want to run off the option of printing the shapes but keep printing the final.
 
     else:   # no BFS shape finder...
         for Y in range(H):
@@ -216,7 +237,10 @@ def img2ascii_convertor(img):
                 char_matrix[X, Y] = get_char_from_b(BM[X, Y])
 
     ###
-    print_output(char_matrix, "imageAsAscii.txt")
+    if printToFile:
+        save_output_to_file(char_matrix, "imageAsAscii.txt")
+    elif printToConsole:
+        print_output_to_console(char_matrix)
 
 ############################################################
 def get_char_from_b(brightness):
