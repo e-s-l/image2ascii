@@ -62,12 +62,13 @@ def preprocess_image(img_file):
 
     if print_to_console:
         # use the console to resize the image
-        # get console size
-        console_width = os.get_terminal_size().columns
+        console_width = os.get_terminal_size().columns  # get console size
         aspect_ratio = w/h                              # would H/W be better
-        new_height = int(console_width/aspect_ratio)    # hmmm
-        # resize
-        img = img.resize((console_width, new_height))
+
+        new_width = console_width
+        new_height = int(new_width/aspect_ratio/2)      # factor of two to account for character aspect
+
+        img = img.resize((new_width, new_height))       # resize
 
     if debug:
         w, h = img.size
