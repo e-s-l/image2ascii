@@ -14,12 +14,12 @@ import sys                  # system stuff (to get input arguments)
 import os                   # operating system stuff (to get file extensions)
 from PIL import Image       # Python Image Library
 import numpy as np          # for the usual
-import time   # to wait (when printing shapes to the console)
+import time                 # to wait (when printing shapes to the console)
 
 ###################
 # control parameters:
 # internal:
-tolerance = 20              # um this probably shouldnt be hardcoded
+tolerance = 10              # um this probably shouldnt be hardcoded
 debug = False               # print misc. outputs
 print_culminative = True    # print the gradually building combo of all shapes
 print_shapes = False         # print bfs shapes to console
@@ -91,14 +91,13 @@ def get_brightness(r, g, b):
 
 
 ############################################################
-def bfs_search(matrix, start, tol):
+def bfs_search(matrix, start, tol, visited):
     # breadth first search algorithm
 
     w, h = matrix.shape
     queue = [start]
     init = matrix[start]
     group = []
-    visited = np.zeros((w, h), dtype=bool)
 
     while queue:
         x, y = queue.pop(0)
@@ -113,7 +112,7 @@ def bfs_search(matrix, start, tol):
                     if not visited[i, j] and abs(matrix[i, j] - init) <= tol:
                         queue.append((i, j))
 
-    return group, visited
+    return group
 
 
 ############################################################
@@ -127,9 +126,8 @@ def find_shapes(matrix, tol):
     for x in range(w):
         for y in range(h):
             if not visited[x, y]:
-                shape, newly_visited = bfs_search(matrix, (x, y), tol)
+                shape = bfs_search(matrix, (x, y), tol, visited)
                 shapes.append(shape)
-                visited = visited | newly_visited
 
     return shapes
 
