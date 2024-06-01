@@ -317,13 +317,16 @@ def main():
     # call the runner
     img2ascii_convertor(image_file, fileName)
 
+
 ############################################################
-
-
 # call initialisation function with input arg of image name
 if __name__ == "__main__":
     try:
-        print("THE CHARACTERIZER")
+        # print("THE CHARACTERIZER")
+        print("\n\n   _____ _  _ ___    ___ _  _   _   ___    _   ___ _____ ___ ___ ___ ___ ___ ___ \n"
+                "  |_   _| || | __|  / __| || | /_\ | _ \  /_\ / __|_   _| __| _ \_ _/ __| __| _ \ \n"
+                "    | | | __ | _|  | (__| __ |/ _ \|   / / _ \ (__  | | | _||   /| |\__ \ _||   /   \n"
+                "    |_| |_||_|___|  \___|_||_/_/ \_\_|_\/_/ \_\___| |_| |___|_|_\___|___/___|_|_\ \n\n" )
         main()
     except KeyboardInterrupt:
         print("\nExiting...")
@@ -334,4 +337,4 @@ if __name__ == "__main__":
         print(":(")
         sys.exit(1)
 
-###
+############################################################
