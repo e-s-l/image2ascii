@@ -1,53 +1,39 @@
 #!/usr/bin/python
 
-# image2ascii.
-
-##################
-# based off:
+############################################################
+# image2ascii a.k.a. The Characterizer!
+# is based off:
 # https://medium.com/@shubham0473/unleash-your-inner-artist-a-step-by-step-guide-to-converting-images-to-ascii-art-using-java-97860464f19a
 # and
 # https://github.com/isaksolheim/image-to-ascii/blob/master/image_to_ascii.py
 # and
 # https://www.youtube.com/watch?v=wUQbchYY80U
 ##################
-
-##################
-# TO DO:
-#   .
-##################
-
 # imports:
 import sys                  # system stuff (to get input arguments)
 import os                   # operating system stuff (to get file extensions)
 from PIL import Image       # Python Image Library
 import numpy as np          # for the usual
+import time   # to wait (when printing shapes to the console)
 
 ###################
 # control parameters:
-debug = False   # print misc. outputs
-printToConsole = False
-printToFile = False
-bfs_grouping = False
-
-##################
-
-scale = int(20)
-tolerance = 50
-
-##################
+# internal:
+tolerance = 20              # um this probably shouldnt be hardcoded
+debug = False               # print misc. outputs
+print_culminative = True    # print the gradually building combo of all shapes
+print_shapes = False         # print bfs shapes to console
+save_shapes = False         # save bfs shapes to files (careful, can produce LOTS of files)
+use_luminance_form = True   # formula for brightness from pixel rgb
+print_to_console = True     # show results of bfs shape finder on console
+# external (changed by user input):
+print_to_file = False         # save final result to file
+bfs_grouping = False        # use bfs shape finder or not
 # The character array to map brightness to:
 ASCII_CHARS = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
 WOW_SNR = "123456789ABCDEFGHIJKLMNOPQRSTU"
 # light to dark, left to right
-char_map = WOW_SNR
-##################
-
-print_shapes = True
-save_shapes = False
-
-##################
-
-use_luminance_form = True
+char_map = WOW_SNR     # define here but properly initialise after user choice
 
 
 ############################################################
@@ -55,13 +41,12 @@ def preprocess_image(img_file):
     # some minor preprocessing
 
     img = None  # initialise
-    fileName, fileExtension = os.path.splitext(img_file)
+    file_name, file_extension = os.path.splitext(img_file)
 
     if debug:
-        print(fileName+'\n', fileExtension)
-    ##################
+        print(file_name+'\n', file_extension)
 
-    # open image file
+    # open image file using PIL
     try:
         img = Image.open(img_file)
     except IOError as ioe:
@@ -69,35 +54,39 @@ def preprocess_image(img_file):
         print("Are u sure this is an image file? Better start again...")
         sys.exit(1)
     
-    ##################
-    # Resize the image according to the output:
-    W, H = img.size
+    #
+    # resize the image according to the output:
+    w, h = img.size
     if debug:
-        print('W, H =', (W, H))
+        print('Original W, H =', (w, h))
 
-    if printToConsole:
+    if print_to_console:
+        # use the console to resize the image
         # get console size
         console_width = os.get_terminal_size().columns
-        aspect_ratio = W/H
-        new_height = int(console_width/aspect_ratio)
+        aspect_ratio = w/h                              # would H/W be better
+        new_height = int(console_width/aspect_ratio)    # hmmm
         # resize
-        img = img.resize((console_width, new_height)) 
-    ###
-    if printToFile:
-        img = img.resize((W//scale, H//scale))
+        img = img.resize((console_width, new_height))
+
+    if debug:
+        w, h = img.size
+        print('Resized W, H =', (w, h))
 
     #######################
     # convert image to RBG type
     img = img.convert('RGB')
 
-    return img, fileName
+    return img, file_name
 
 
 ############################################################
 def get_brightness(r, g, b):
-    # Given a set of rgb values of a pixel, calculate brightness
-    # brightness = sum([r, g, b])/3             # simple average
-    brightness = 0.299*r + 0.587*g + 0.114*b    # luminance formula
+    # given a set of rgb values of a pixel, calculate brightness
+    if use_luminance_form:
+        brightness = 0.299*r + 0.587*g + 0.114*b    # luminance formula
+    else:
+        brightness = sum([r, g, b]) / 3             # simple average
     return brightness
 
 
@@ -107,8 +96,7 @@ def bfs_search(matrix, start, tol):
 
     w, h = matrix.shape
     queue = [start]
-
-    b_init = matrix[start]
+    init = matrix[start]
     group = []
     visited = np.zeros((w, h), dtype=bool)
 
@@ -122,7 +110,7 @@ def bfs_search(matrix, start, tol):
 
             for i in range(max(0, x-1), min(w, x+2)):
                 for j in range(max(0, y-1), min(h, y+2)):
-                    if not visited[i, j] and abs(matrix[i, j] - b_init) <= tol:
+                    if not visited[i, j] and abs(matrix[i, j] - init) <= tol:
                         queue.append((i, j))
 
     return group, visited
@@ -130,7 +118,7 @@ def bfs_search(matrix, start, tol):
 
 ############################################################
 def find_shapes(matrix, tol):
-    # BFS pathfinder to get subsets of similar brightness
+    # bfs pathfinder to get subsets of similar brightness
 
     w, h = matrix.shape
     shapes = []
@@ -148,14 +136,15 @@ def find_shapes(matrix, tol):
 
 ############################################################
 def get_output(matrix):
-    # for printing the character matrix as plain text
+    # formatting for printing the character matrix as plain text
 
-    W, H = matrix.shape
+    w, h = matrix.shape
     output = ""
-    for Y in range(H):
-        for X in range(W):
-            output += matrix[X, Y]
-        output += "\n"
+    for y in range(h):
+        for x in range(w):
+            output += matrix[x, y]
+        if not y == h:
+            output += "\n"
 
     return output
 
@@ -179,13 +168,9 @@ def save_output_to_file(matrix, file):
 ############################################################
 def img2ascii_convertor(img, file):
 
-    #######################
-
     # convert image into brightness matrix (averaged rgb values for each pixel)
-    # get img (new) dimensions (again)
-    W, H = img.size
-    # initialise (dark) matrix
-    BM = np.zeros((W, H))
+    W, H = img.size             # get img (new) dimensions (again)
+    BM = np.zeros((W, H))       # initialise (dark) matrix
 
     for X in range(W):
         for Y in range(H):
@@ -198,11 +183,12 @@ def img2ascii_convertor(img, file):
         print("BM")
         print(BM)
 
-    ######################
+    # the bfs tolerance should depend on the max & min of the BM...
 
-    # initialise (empty) matrix
+    # initialise (empty) matrix of characters
     char_matrix = np.full((W, H), ' ', dtype=str)
 
+    # find the character matrix:
     if bfs_grouping:
         if debug:
             print("finding shapes")
@@ -212,6 +198,9 @@ def img2ascii_convertor(img, file):
         if debug:
             print("num of shapes =", len(shapes))
         for shape in shapes:
+
+            # defn function to get shape matrix ?
+
             # initialise (empty) matrix
             shape_matrix = np.full((W, H), ' ', dtype=str)
             shape_num += 1
@@ -223,69 +212,72 @@ def img2ascii_convertor(img, file):
                 # add to the culminative total matrix:
                 char_matrix[x, y] = shape_matrix[x, y]
 
-            if printToFile and save_shapes:
+            if print_to_file and save_shapes:
                 save_output_to_file(shape_matrix, "shape_%i.txt" % shape_num)
-            elif printToConsole and print_shapes:
-                print_output_to_console(shape_matrix)
+            elif print_to_console:
+                if print_shapes:
+                    print_output_to_console(shape_matrix)
+                    time.sleep(0.1)
+                if print_culminative:
+                    print_output_to_console(char_matrix)
+                time.sleep(0.1)
 
-    else:   # no BFS shape finder...
+    else:   # no bfs shape finder...
         for Y in range(H):
             for X in range(W):
                 char_matrix[X, Y] = get_char_from_b(BM[X, Y])
-
-    ###
-    if printToFile:
+    #
+    if print_to_file:
         save_output_to_file(char_matrix, "%s_ascii.txt" % file)
-    elif printToConsole:
+    if print_to_console:
         print_output_to_console(char_matrix)
 
 
 ############################################################
 def get_char_from_b(brightness):
     # convert brightness into ascii:
+
     index = int((len(char_map) - 1) * (brightness / 255.0))
     return char_map[index]
 
 
 ############################################################
 def process_user_input():
-
     #
-    global printToConsole
-    global printToFile
+    global print_to_console
+    global print_to_file
     global bfs_grouping
     global char_map
 
-    # confirm require image file supplied
+    # confirm required image file supplied
     if len(sys.argv) != 2:
         print("Try: python image2ascii.py <image_file>")
         sys.exit(1)
 
     # ask for options:
-    # print to file or console...
-    opts_in_file = {"1", "file"}
-    opts_in_console = {"2", "console", ""}
-    print("Would u like to print to file [1] or the console [2]?")
+    # print to file as well as console...
+    io_file = {"y", "yes", "file", ""}
+    io_no_file = {"n", "no"}
+    print("Would u like to print to file [y/n]? (Default is [y].)")
     while True:
         user_in = input().strip().lower()
-        if user_in in opts_in_file or user_in in opts_in_console:
-            printToFile = user_in in opts_in_file
-            printToConsole = user_in in opts_in_console
-            if debug:
-                print("printing to", "file..." if printToFile else "console...")
+        if user_in in io_file or user_in in io_no_file:
+            print_to_file = user_in in io_file
+            if print_to_file and debug:
+                print("printing to file.")
             break
             ###
         else:
-            print("Please enter 1 or 2, or 'file' or 'console'...")
+            print("Please enter y or n...")
 
     # use BFS to find shapes or not:
-    opts_in_bfs = {"1", "bfs", ""}
-    opts_in_no_bfs = {"2", "no"}
-    print("Would u like to use BFS shape grouping [1] or not [2]?")
+    io_bfs = {"y", "yes", "bfs", ""}
+    io_no_bfs = {"n", "no"}
+    print("Would u like to use BFS shape grouping [y/n]? (Default is [y].)")
     while True:
         user_in = input().strip().lower()
-        if user_in in opts_in_bfs or user_in in opts_in_no_bfs:
-            bfs_grouping = user_in in opts_in_bfs
+        if user_in in io_bfs or user_in in io_no_bfs:
+            bfs_grouping = user_in in io_bfs
             if debug:
                 print("bfs grouping", "applied" if bfs_grouping else "not applied")
             break
@@ -295,8 +287,11 @@ def process_user_input():
 
     # which character map to use:
     opts_in_ascii = {"1", "ascii", ""}
-    opts_in_snr = {"2", "snr"}
-    print("Would u like to map to ascii characters [1] or snr values [2]?")
+    opts_in_snr = {"2", "snr", "wow"}
+    print("Which character set would you like to map to:")
+    print("[1]. Classic Ascii: " + ASCII_CHARS)
+    print("[2]. WOW SNR values: " + WOW_SNR)
+    print("(Default is [1].)")
     while True:
         user_in = input().strip().lower()
         if user_in in opts_in_ascii or user_in in opts_in_snr:
@@ -315,9 +310,9 @@ def process_user_input():
 ############################################################
 def main():
 
+    # get user choices (defaults are: save to file, use acsii...)
     process_user_input()
-    #######################
-    # if cli usage is: ./image2ascii.py imagefile.png
+    # expected cli usage is: ./image2ascii.py imagefile.png
     image_file, fileName = preprocess_image(sys.argv[1])
     # call the runner
     img2ascii_convertor(image_file, fileName)
@@ -328,14 +323,15 @@ def main():
 # call initialisation function with input arg of image name
 if __name__ == "__main__":
     try:
+        print("THE CHARACTERIZER")
         main()
     except KeyboardInterrupt:
         print("\nExiting...")
+        print(":)")
         sys.exit(0)
-        
     except Exception as e:
         print("There is an error: \n", e)
+        print(":(")
         sys.exit(1)
-    print(":)")
 
 ###
