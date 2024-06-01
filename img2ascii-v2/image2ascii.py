@@ -38,7 +38,7 @@ char_map = WOW_SNR     # define here but properly initialise after user choice
 
 ############################################################
 def preprocess_image(img_file):
-    # some minor preprocessing
+    """Modify the image size to match the console, plus some minor preprocessing."""
 
     img = None  # initialise
     file_name, file_extension = os.path.splitext(img_file)
@@ -82,7 +82,8 @@ def preprocess_image(img_file):
 
 ############################################################
 def get_brightness(r, g, b):
-    # given a set of rgb values of a pixel, calculate brightness
+    """Given a set of rgb values of a pixel, calculate brightness."""
+
     if use_luminance_form:
         brightness = 0.299*r + 0.587*g + 0.114*b    # luminance formula
     else:
@@ -92,7 +93,7 @@ def get_brightness(r, g, b):
 
 ############################################################
 def bfs_search(matrix, start, tol, visited):
-    # breadth first search algorithm
+    """Breadth first search algorithm."""
 
     w, h = matrix.shape
     queue = [start]
@@ -117,7 +118,7 @@ def bfs_search(matrix, start, tol, visited):
 
 ############################################################
 def find_shapes(matrix, tol):
-    # bfs pathfinder to get subsets of similar brightness
+    """Use the bfs pathfinder to get subsets of similar brightness."""
 
     w, h = matrix.shape
     shapes = []
@@ -134,7 +135,7 @@ def find_shapes(matrix, tol):
 
 ############################################################
 def get_output(matrix):
-    # formatting for printing the character matrix as plain text
+    """Formatting for printing the character matrix as plain text."""
 
     w, h = matrix.shape
     output = ""
@@ -149,6 +150,7 @@ def get_output(matrix):
 
 ############################################################
 def print_output_to_console(matrix):
+    """What it says on the packet."""
 
     output = get_output(matrix)
     print(output)
@@ -156,6 +158,7 @@ def print_output_to_console(matrix):
 
 ############################################################
 def save_output_to_file(matrix, file):
+    """What it says on the packet."""
 
     output = get_output(matrix)
     f = open(file, "wt")
@@ -165,6 +168,7 @@ def save_output_to_file(matrix, file):
 
 ############################################################
 def img2ascii_convertor(img, file):
+    """First, convert the image to brightness, then map to characters."""
 
     # convert image into brightness matrix (averaged rgb values for each pixel)
     W, H = img.size             # get img (new) dimensions (again)
@@ -233,7 +237,7 @@ def img2ascii_convertor(img, file):
 
 ############################################################
 def get_char_from_b(brightness):
-    # convert brightness into ascii:
+    """Convert brightness into ascii"""
 
     index = int((len(char_map) - 1) * (brightness / 255.0))
     return char_map[index]
@@ -241,7 +245,8 @@ def get_char_from_b(brightness):
 
 ############################################################
 def process_user_input():
-    #
+    """Process user input."""
+
     global print_to_console
     global print_to_file
     global bfs_grouping
@@ -307,6 +312,10 @@ def process_user_input():
 
 ############################################################
 def main():
+    """Runs the subroutines."""
+
+    os.system("clear")
+    os.system("figlet -f future THE CHARACTERIZER")
 
     # get user choices (defaults are: save to file, use acsii...)
     process_user_input()
@@ -319,12 +328,8 @@ def main():
 ############################################################
 # call initialisation function with input arg of image name
 if __name__ == "__main__":
+
     try:
-        # print("THE CHARACTERIZER")
-        print("\n\n   _____ _  _ ___    ___ _  _   _   ___    _   ___ _____ ___ ___ ___ ___ ___ ___ \n"
-                "  |_   _| || | __|  / __| || | /_\ | _ \  /_\ / __|_   _| __| _ \_ _/ __| __| _ \ \n"
-                "    | | | __ | _|  | (__| __ |/ _ \|   / / _ \ (__  | | | _||   /| |\__ \ _||   /   \n"
-                "    |_| |_||_|___|  \___|_||_/_/ \_\_|_\/_/ \_\___| |_| |___|_|_\___|___/___|_|_\ \n\n" )
         main()
     except KeyboardInterrupt:
         print("\nExiting...")
