@@ -41,22 +41,24 @@ def runner(command_line_args):
 
     # open (and preprocess) image file
     image = open_image(image_file)
-    img_pix = image.load()
+    # get dimensions of original image
     img_w, img_h = image.size
+    # get pixels from original image
+    img_pix = image.load()
     # initialise new image
-    new_image = Image.new('RGB', (img_h, img_w))
-    #
-    # image_array = np.array(image)
+    new_image = Image.new('RGB', (img_w, img_h))
 
-    # place holder
+    # 1: flip colors...
     for x in range(img_w):
         for y in range(img_h):
             p = (x, y)
-            new_image.putpixel(p, img_pix[x,y])
+            rgb = img_pix[p]
+            new_image.putpixel(p, (255-rgb[0], 255-rgb[1], 255-rgb[1]))
 
     # save end product
     new_image.save("deranged_image.png")
-
+    # close original image file
+    image.close()
     #
     print(":)")
 
@@ -81,7 +83,7 @@ if __name__ == '__main__':
 
     try:
         os.system("figlet -f future THE DERANGER")
-
+        # runner(args)
     except KeyboardInterrupt:
         sys.exit(0)
     except Exception as e:
