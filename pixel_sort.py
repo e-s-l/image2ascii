@@ -34,14 +34,13 @@ def open_image(image_file):
 
 def get_brightness(pix_rgb):
     """Given a set of rgb values of a pixel, calculate brightness."""
-   # print("get_brightness")
+
     r, g, b = pix_rgb
     return 0.299*r + 0.587*g + 0.114*b    # luminance formula
 
 
 def bfs_search(matrix, start, tol, visited):
     """Breadth first search algorithm."""
-   # print("bfs_search")
 
     w, h = matrix.shape
     queue = [start]
@@ -64,29 +63,15 @@ def bfs_search(matrix, start, tol, visited):
     return group
 
 
-def quick_sort(pixels):
-    """Recursive quick sort algorithm for Nx1 array of pixs"""
-
-    if not pixels:
-        return pixels
-    else:
-        pivot = pixels[0]
-        # recursion...
-        lower = quick_sort([pix for pix in pixels[1:] if (get_brightness(pix) < get_brightness(pivot))])
-        higher = quick_sort([pix for pix in pixels[1:] if (get_brightness(pix) >= get_brightness(pivot))])
-        return lower + [pivot] + higher
-
-
-
 def find_shapes(matrix):
     """Use the bfs pathfinder to get subsets of similar brightness."""
 
     print("find_shapes")
     # initialise shapes and bfs stuff
     w, h = matrix.shape
-    shapes = []
+    shapes = []     # list
     visited = np.zeros((w, h), dtype=bool)
-    tol = 10
+    tol = 20
 
     # find shapes...
     for x in range(w):
@@ -98,9 +83,21 @@ def find_shapes(matrix):
     return shapes
 
 
+def quick_sort(pixels):
+    """Recursive quick sort algorithm for Nx1 array of pixs"""
+
+    if not pixels:
+        return pixels
+    else:
+        pivot = pixels[0]      
+        # recursion...
+        lower = quick_sort([pix for pix in pixels[1:] if (get_brightness(pix) < get_brightness(pivot))])
+        higher = quick_sort([pix for pix in pixels[1:] if (get_brightness(pix) >= get_brightness(pivot))])
+        return lower + [pivot] + higher
+
+
 def runner(command_line_args):
     """Main function to run all components."""
-    print("runner")
 
     # get input arguments
     image_file = command_line_args.image_in
@@ -109,123 +106,52 @@ def runner(command_line_args):
     # open (and preprocess) image file
     image = open_image(image_file)
 
+    file_name, file_extension = os.path.splitext(image_file)
+
     # get dimensions of original image
-    img_w, img_h = image.size
+    w, h = image.size
 
     # get pixels from original image
-    # img_pix = image.load()
-
-    #load gets pixels but it would be nice to have an array so lets do it manually.
-
+    img_pixs = image.load()
 
     # initialise new image
-    new_image = Image.new('RGB', (img_w, img_h))
+    new_image = Image.new('RGB', (w, h))
 
+    # initialise brightness martix
+    bm = np.zeros((w, h))
 
+    # fill out the brightness matrix
+    for x in range(w):
+        for y in range(h):
 
-    # initialise a brightness numpy matrix
-    bm = np.zeros((img_w, img_h))
-   # bavm = bm
+            p = (x, y)
+            pix = img_pixs[p]
+            bm[x, y] = get_brightness(pix)
 
-
-
-    for x in range(img_w):
-        for y in range(img_h):
-
-            p = (x,y)
-            img_pix = img.getpixel(p)
-            rgb = img_pix
-
-            # 1: flip colors...
-            new_pix = (255-rgb[0], 255-rgb[1], 255-rgb[2])
-
-            img.putpixel(p, new_pix)
-            # 2: get brightness...
-            bm[x, y] = get_brightness(new_pix)
-
-
-
-
-
+    # based on the brightness, find shapes/areas of similar brightness
     shapes = find_shapes(bm)
 
-    shape_num = 0
+    # initialise
+    area = np.zeros((w, h, 3))
 
+    # now cycle through the shapes & sort the pixels
+    print("sorting pixels for each shape...")
     for shape in shapes:
 
-        all_pixels =[]
+        all_pixels = []
         all_sorted = []
 
+        for x, y in shape:
+            pos = (x, y)
+            pix = img_pixs[pos]
+            all_pixels.append(pix)
+            all_sorted.append(quick_sort(all_pixels))
 
-        if debug:
-            shape_num += 1
-            print(shape_num)
-
-      #  for x, y in shape:
-            # average the brightness over the shape
-            # b_av = np.mean([bm[x, y] for x, y in shape])
-            #bavm[x, y] = bm[x, y]*random.uniform(0, shape_num)
-
-        for x in shape:
-            all_pixels.append([])
-            for y in shape:
-                p = (x,y)
-                img_pix = img.getpixel(p)
-                all_pixels[x].append(img_pix)
-
-        # 2. sort pixels
-        all_sorted = []
-
-        for x in shape:
-            all_sorted.append(quick_sort(all_pixels[x]))
-
-        # 3. save pixels
-        for x in shape:
-            for y in shape:
-                p = (x, y)
-                new_image.putpixel(p, all_sorted[x][y])
-
-    '''
-
-    for x in range(img_w):
-        for y in range(img_h):
-            # make new image
-            p = (x, y)
-            pix = int(bavm[x, y])
-            new_pix = (random.randint(0, pix), random.randint(0, pix), random.randint(0, pix))
-            new_image.putpixel(p, new_pix)
-
-    '''
-    '''
-
-    # quick sort all image pixels
-    # 1. create array of all pixels:
-
-    all_pixels =[]
-
-    for x in range(img_w):
-        all_pixels.append([])
-        for y in range(img_h):
-            p = (x,y)
-            img_pix = img.getpixel(p)
-            all_pixels[x].append(img_pix)
-
-    # 2. sort pixels
-    all_sorted = []
-
-    for x in range(img_w):
-        all_sorted.append(quick_sort(all_pixels[x]))
-
-    # 3. save pixels
-    for x in range(img_w):
-        for y in range(img_h):
-            p = (x, y)
-            new_image.putpixel(p, all_sorted[x][y])
-
-    '''
+        for i, (x, y) in enumerate(shape):
+            new_image.putpixel((x, y), all_sorted[i])
 
     # save end product
-    new_image.save("deranged_image.png")
+    new_image.save("%s_deranged.png" % file_name)
     # close original image file
     image.close()
     #
