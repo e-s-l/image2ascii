@@ -41,7 +41,7 @@ def get_brightness(pix_rgb):
 
 def bfs_search(matrix, start, tol, visited):
     """Breadth first search algorithm."""
-   # print("bfs_search")
+    print("bfs_search")
 
     w, h = matrix.shape
     queue = [start]
@@ -114,8 +114,7 @@ def runner(command_line_args):
 
     # get pixels from original image
     # img_pix = image.load()
-
-    #load gets pixels but it would be nice to have an array so lets do it manually.
+    img = image.convert('RGB')
 
 
     # initialise new image
@@ -141,7 +140,7 @@ def runner(command_line_args):
 
             img.putpixel(p, new_pix)
             # 2: get brightness...
-            bm[x, y] = get_brightness(new_pix)
+             bm[x, y] = get_brightness(new_pix)
 
 
 
@@ -153,37 +152,14 @@ def runner(command_line_args):
 
     for shape in shapes:
 
-        all_pixels =[]
-        all_sorted = []
-
-
         if debug:
             shape_num += 1
             print(shape_num)
 
-      #  for x, y in shape:
+        for x, y in shape:
             # average the brightness over the shape
             # b_av = np.mean([bm[x, y] for x, y in shape])
-            #bavm[x, y] = bm[x, y]*random.uniform(0, shape_num)
-
-        for x in shape:
-            all_pixels.append([])
-            for y in shape:
-                p = (x,y)
-                img_pix = img.getpixel(p)
-                all_pixels[x].append(img_pix)
-
-        # 2. sort pixels
-        all_sorted = []
-
-        for x in shape:
-            all_sorted.append(quick_sort(all_pixels[x]))
-
-        # 3. save pixels
-        for x in shape:
-            for y in shape:
-                p = (x, y)
-                new_image.putpixel(p, all_sorted[x][y])
+            bavm[x, y] = bm[x, y]*random.uniform(0, shape_num)
 
     '''
 
@@ -195,7 +171,6 @@ def runner(command_line_args):
             new_pix = (random.randint(0, pix), random.randint(0, pix), random.randint(0, pix))
             new_image.putpixel(p, new_pix)
 
-    '''
     '''
 
     # quick sort all image pixels
@@ -222,7 +197,7 @@ def runner(command_line_args):
             p = (x, y)
             new_image.putpixel(p, all_sorted[x][y])
 
-    '''
+
 
     # save end product
     new_image.save("deranged_image.png")
