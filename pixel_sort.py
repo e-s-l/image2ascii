@@ -5,19 +5,19 @@
 ###############
 
 # IMPORTS #
-import argparse         # To process command line arguments.
-import os               # For terminal actions.
-from PIL import Image   # Python Image Library.
-import sys              # To exit the program, etc.
-import numpy as np      # For matrix maths.
-from collections import deque   # double-ended queue -  to reduce pop O
-from collections import defaultdict #
+import argparse                         # To process command line arguments.
+import os                               # For terminal actions.
+from PIL import Image                   # Python Image Library.
+import sys                              # To exit the program, etc.
+import numpy as np                      # For matrix maths.
+from collections import deque           # double-ended queue -  to reduce pop O
+from collections import defaultdict     # to initialise empty dict
 
-# FUNCTIONS #
 
-def open_image(image_file):
+def open_image(image_file, debug):
     """Use PIL to open image and convert to RGB form."""
-    print("open_image")
+    if debug:
+        print("open_image")
 
     # open image file
     try:
@@ -31,10 +31,12 @@ def open_image(image_file):
 
     return img
 
+
 def luminance(pix_rgb):
     """Given a set of rgb values of a pixel, calculate brightness."""
     r, g, b = pix_rgb
     return 0.299 * r + 0.587 * g + 0.114 * b  # luminance formula
+
 
 def bfs_search(matrix, start, tol, visited):
     """Breadth First Search algorithm."""
@@ -63,15 +65,36 @@ def bfs_search(matrix, start, tol, visited):
 
     return group
 
-def find_shapes(matrix):
-    """Use the bfs pathfinder to get subsets of similar brightness."""
-    print("find_shapes")
 
+'''
+# Not using this now...
+def quick_sort(pixels):
+    """Recursive quick sort algorithm for Nx1 array of pixs"""
+
+    if not pixels:
+        return pixels
+    elif len(pixels) <= 1:
+        return pixels
+    else:
+        pivot = pixels[0]
+        # recursion...
+        lower = quick_sort([pix for pix in pixels[1:] if (luminance(pix) < luminance(pivot))])
+        higher = quick_sort([pix for pix in pixels[1:] if (luminance(pix) >= luminance(pivot))])
+        return lower + [pivot] + higher
+'''
+
+
+def find_shapes(matrix, args):
+    """Use the bfs pathfinder to get subsets of similar brightness."""
+    tol = args.tolerance
+    debug = args.debug
+    if debug:
+        print("find_shapes")
+    # initialise shapes and bfs stuff
     w, h = matrix.shape
     shapes = []     # list
     visited = np.zeros((w, h), dtype=bool)
-    tol = 200
-
+    # find shapes...
     for x in range(w):
         for y in range(h):
             if not visited[x, y]:
@@ -80,77 +103,82 @@ def find_shapes(matrix):
 
     return shapes
 
+
 def sort_pixels_by_brightness(pixels):
     """Sort an array of pixels by their brightness."""
     return sorted(pixels, key=luminance)
 
-def runner(command_line_args):
+
+def runner(args):
     """Main function to run all components."""
 
     # get input arguments
-    image_file = command_line_args.image_in
-    debug = command_line_args.d
-
+    image_file = args.image_in
+    debug = args.debug
+    tolerance = args.tolerance
     # open (and preprocess) image file
-    image = open_image(image_file)
+    image = open_image(image_file, debug)
+    # get file name w/o extension
     file_name, file_extension = os.path.splitext(image_file)
-
     # get dimensions of original image
     w, h = image.size
-
     # get pixels from original image
-    img_pixs = image.load()
-
+    img_pix = image.load()
     # initialise new image
     new_image = Image.new('RGB', (w, h))
 
+    # CREATE BRIGHTNESS MATRIX #
     # initialise brightness matrix
     bm = np.zeros((w, h))
-
     # fill out the brightness matrix
     for x in range(w):
         for y in range(h):
             p = (x, y)
-            pix = img_pixs[p]
+            pix = img_pix[p]
             bm[x, y] = luminance(pix)
 
+    # FIND SHAPES #
     # based on the brightness, find shapes/areas of similar brightness
-    shapes = find_shapes(bm)
+    shapes = find_shapes(bm, args)
 
-    ### Processing shapes ###
+    # PROCESS SHAPES #
+    print("sort_pixels")
     for shape in shapes:
         rows = defaultdict(list)
         for x, y in shape:
             rows[y].append((x, y))
 
         for y, coords in rows.items():
-            all_pixels = [img_pixs[(x, y)] for x, y in coords]
+            all_pixels = [img_pix[(x, y)] for x, y in coords]
             sorted_pixels = sort_pixels_by_brightness(all_pixels)
 
             for i, (x, y) in enumerate(coords):
                 new_image.putpixel((x, y), sorted_pixels[i])
 
+    # FINISH UP #
     # save end product
-    new_image.save(f"{file_name}_deranged.png")
+    new_image.save(f"{file_name}_deranged_t{tolerance}.png")
     # close original image file
     image.close()
     print(":)")
 
+
 if __name__ == '__main__':
     # PARSE INPUT ARGUMENTS #
+    # Initialise argument parser:
     parser = argparse.ArgumentParser(description='Takes an image file and deranges it a la pixel sorting.')
-
     # Add arguments:
     parser.add_argument('image_in', type=str, help='Image file to process.')  # Required
-    parser.add_argument('--d', action='store_true', help='Option to enable debug mode.')   # Optional
-
+    parser.add_argument('--debug', action='store_true', help='Option to enable debug mode.')   # Optional
+    parser.add_argument('--tolerance', type=int, default=20, help='Tolerance for brightness grouping.')   # Optional
     # Parse:
-    args = parser.parse_args()
+    input_args = parser.parse_args()
 
     # START RUNNING MAIN PROGRAM #
     try:
-        os.system("figlet THE DERANGER")
-        runner(args)
+        if input_args.debug:
+            os.system("figlet THE DERANGER")
+        runner(input_args)
     except KeyboardInterrupt:
         sys.exit(0)
     except Exception as e:
