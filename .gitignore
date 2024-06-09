@@ -2,8 +2,9 @@
 misc-imgs
 # ignore rando git reminder file:
 githubstuff.txt
-# ignore all image files:
+# ignore other text files:
 *.txt
+# ignore all image files:
 *.jpg
 *.png
 *.jpeg
