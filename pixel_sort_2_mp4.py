@@ -1,7 +1,8 @@
-####################################
-# MAKE GIF FROM PIXEL SORTED IMAGES:
-####################################
+#!/usr/bin/python
 
+####################################
+# MAKE MP4 FROM PIXEL SORTED IMAGES:
+####################################
 
 # IMPORTS #
 import argparse                 # To process command line arguments.
@@ -9,9 +10,7 @@ import os                       # to get file name and extension
 import imageio.v2 as imageio    # to make the .mp4 file
 import subprocess               # recommended over os for system calls  #but really should import other file...
 
-###
-
-# PARSE INPUT ARGUMENTS #
+# parse image arguments
 parser = argparse.ArgumentParser(description='Takes an image file and deranges it a la pixel sorting, then creates a '
                                              'mp4 by combing all the outputs of the pixel sort program.')
 parser.add_argument('image_in', type=str, help='Image file to process.')
@@ -36,7 +35,7 @@ for t in range(0, tol_max, tol_step):
 
 
 # combine these images into a mp4
-writer = imageio.get_writer(f'{file_name}_deranged.mp4',fps=20)
+writer = imageio.get_writer(f'{file_name}_deranged.mp4', fps=10)
 
 for filename in filenames:
     writer.append_data(imageio.imread(filename))

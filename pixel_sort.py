@@ -142,7 +142,8 @@ def runner(args):
     shapes = find_shapes(bm, args)
 
     # PROCESS SHAPES #
-    print("sort_pixels")
+    if debug:
+        print("sort_pixels")
     for shape in shapes:
         rows = defaultdict(list)
         for x, y in shape:
@@ -152,8 +153,8 @@ def runner(args):
             all_pixels = [img_pix[(x, y)] for x, y in coords]
             sorted_pixels = sort_pixels_by_brightness(all_pixels)
 
-            for i, (x, y) in enumerate(coords):
-                new_image.putpixel((x, y), sorted_pixels[i])
+            for i, (j, k) in enumerate(coords):
+                new_image.putpixel((j, k), sorted_pixels[i])
 
     # FINISH UP #
     # save end product
@@ -170,7 +171,7 @@ if __name__ == '__main__':
     # Add arguments:
     parser.add_argument('image_in', type=str, help='Image file to process.')  # Required
     parser.add_argument('--debug', action='store_true', help='Option to enable debug mode.')   # Optional
-    parser.add_argument('--tolerance', type=int, default=20, help='Tolerance for brightness grouping.')   # Optional
+    parser.add_argument('--tolerance', type=int, default=50, help='Tolerance for brightness grouping.')   # Optional
     # Parse:
     input_args = parser.parse_args()
 
