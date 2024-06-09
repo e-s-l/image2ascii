@@ -1,8 +1,12 @@
+# ignore folder of test images:
 misc-imgs
+# ignore rando git reminder file:
 githubstuff.txt
-img2ascii-v2/.idea*
+# ignore all image files:
 *.txt
 *.jpg
 *.png
 *.jpeg
 *.JPG
+# ignore other hidden things:
+.*
