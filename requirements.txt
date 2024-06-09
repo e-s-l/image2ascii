@@ -1,3 +1,4 @@
 PIL
+imageio
 imageio[ffmpeg]
 imageio[pyav]
