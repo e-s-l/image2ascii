@@ -1,3 +1,8 @@
 misc-imgs
 githubstuff.txt
-img2ascii-v2/.idea/
+img2ascii-v2/.idea*
+*.txt
+*.jpg
+*.png
+*.jpeg
+*.JPG
