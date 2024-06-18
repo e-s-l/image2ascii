@@ -1,0 +1,8 @@
+Learnt from:
+https://tannerhelland.com/2012/12/28/dithering-eleven-algorithms-source-code.html
+
+Based on:
+https://scipython.com/blog/floyd-steinberg-dithering/
+
+Inspired by:
+https://goblin-heart.net/sadgrl/about/
