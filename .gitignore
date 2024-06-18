@@ -9,5 +9,7 @@ image2ascii/img2ascii-v2/*.txt
 *.png
 *.jpeg
 *.JPG
+# ignore movie files:
+*.mp4
 # ignore other hidden things:
 .*

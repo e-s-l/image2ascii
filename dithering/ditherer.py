@@ -38,27 +38,68 @@ def get_closest(pix, channels):
 
 def ditherer(img, channels, algorithm):
 
-    # img_dithered = img
+    # dy, dx, fraction
+
+    FS_diffusion_matrix = [
+        (0, 1, 7.0 / 16.0),
+        (1, -1, 3.0 / 16.0),
+        (1, 0, 5.0 / 16.0),
+        (1, 1, 1.0 / 16.0)
+    ]
+
+    Atkinson_diffusion_matrix = [
+        (0, 1, 1.0 / 8.0),
+        (0, 2, 1.0 / 8.0),
+        (1, -1, 1.0 / 8.0),
+        (1, 0, 1.0 / 8.0),
+        (1, 1, 1.0 / 8.0),
+        (2, 0, 1.0 / 8.0)
+    ]
+
+    Burkes_diffusion_matrix = [
+        (0, 1, 8.0 / 32.0),
+        (0, 2, 4.0 / 32.0),
+        (1, -2, 2.0 / 32.0),
+        (1, -1, 4.0 / 32.0),
+        (1, 0, 8.0 / 32.0),
+        (1, 1, 4.0 / 32.0),
+        (1, 2, 2.0 / 32.0)
+    ]
+
+    Sierra_lite_diffusion_matrix = [
+        (0, 1, 2.0 / 4.0),
+        (1, -1, 1.0 / 4.0),
+        (1, 0, 1.0 / 4.0)
+    ]
+
+    diffusion_matrices = {"FS": FS_diffusion_matrix, "Sl": Sierra_lite_diffusion_matrix,
+                         "At": Atkinson_diffusion_matrix, "Bu": Burkes_diffusion_matrix}
+
+    diffusion_matrix = diffusion_matrices.get(algorithm)
 
     img_array = np.array(img, dtype=float)
+    h, w = img_array.shape[:2]
 
-    for i in range(img_array.shape[0]):
-        for j in range(img_array.shape[1]):
-            pix = img_array[i, j]
+    for i in range(h):
+        for j in range(w):
+            pix = img_array[i, j] / 255
             pix_new = get_closest(pix, channels)
             img_array[i, j] = pix_new
             err = pix - pix_new
 
-            img_array[i, j + 1] = err * 7.0 / 16.0
-            img_array[i + 1, j - 1] = err * 3.0 / 16.0
-            img_array[i + 1, j] = err * 5.0 / 16.0
-            img_array[i + 1, j + 1] = err * 1.0 / 16.0
+            for dy, dx, fraction in diffusion_matrix:
+                y, x = i + dy, j + dx
+                if 0 <= y < h and 0 <= x < w:
+                    img_array[y, x] += err * fraction
 
-    return Image.fromarray(img_array)
+    return Image.fromarray((255 * img_array).astype(np.uint8))
 
 
 def runner(args):
     """Main function to run all components."""
+
+    channels = 6  # number of channels per RGB
+    algorithm = "At"  # "FS", "At", "Sl", "Bu"
 
     # get input arguments
     img_file = args.image_in
@@ -66,39 +107,27 @@ def runner(args):
 
     # open (and preprocess) image file
     img = open_image(img_file, debug)
-    # get file name w/o extension
+
+    # get & make filenames
     fileName, fileExtension = os.path.splitext(img_file)
-    filename_new = f"{fileName}_dithered.png"
+    filename_new = f"{fileName}_dithered_{algorithm}.png"
 
     # get dimensions of original image
     w, h = img.size
 
-    if debug:
-        print("Img size (in pix): w, h: ", w, h)
-
     # get pixels from original image
     img_pix = img.load()
 
-    # later...
-    # adjust size to common webpage sizes...
-    # ie full-screen or mobile media queries maximals...
-    w_new = w  # some common pixel count
-    h_new = h  #
-
+    # adjust image size
+    ar = w / h
+    w_new, h_new = 1920, round(1920 / ar)
     img = img.resize((w_new, h_new), Image.Resampling.LANCZOS)  # Lanczos filter anti-aliasing
 
-    channels = 3  # number of channels per RGB
-    algorithm = "FS"        # Floyd-Steinberg
-    # would also like to implement: Jarvis-Judice-Ninke (JJN), Stucki, Burkes, Sierra (3 kinds)...
-
+    # apply dithering
     img_new = ditherer(img, channels, algorithm)
 
-
-
-
-
     # done...
-    img_new.save(filename_new)
+    img_new.save(filename_new.format(channels))
 
 
 if __name__ == '__main__':
@@ -113,6 +142,9 @@ if __name__ == '__main__':
     input_args = parser.parse_args()
 
     # START RUNNING MAIN PROGRAM #
+    runner(input_args)
+    sys.exit(0)
+
     try:
         if input_args.debug:
             os.system("figlet THE DITHERER")
